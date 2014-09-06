@@ -1,4 +1,4 @@
-var _canvas, _ctx;
+var _canvas, _ctx, DEBUG = true;
 
 window.onload = function() {
   setTimeout(function() {
@@ -10,16 +10,19 @@ window.onload = function() {
 };
 
 function color(col) {
+  debug('setting color to', col);
   _ctx.strokeStyle = _ctx.fillStyle = col; 
 }
 
 function lineWidth(n) {
+  debug('setting line width to', n);
   _ctx.lineWidth = n; 
 }
 
 var _pushDepth = 0, _centerX, _centerY;
 
 function clear() {
+  debug('clearing screen');
   for (var i = 0; i < _pushDepth; ++i)
     _ctx.restore();
   var w = document.body.clientWidth - 5, h = document.body.clientHeight - 5;
@@ -32,16 +35,19 @@ function clear() {
 }
 
 function box(x, y, w, h) {
+  debug('drawing a', w, 'by', h, 'box at', x, y);
   _ctx.fillRect(x, y - h, w, h);
 }
 
 function circle(x, y, r) {
+  debug('drawing a circle with radius', r, 'at', x, y);
   _ctx.beginPath();
   _ctx.arc(x, y, r, 0, 2 * Math.PI);
   _ctx.fill();
 }
 
 function line(x1, y1, x2, y2) {
+  debug('drawing a line from', x1, y1, 'to', x2, y2);
   _ctx.beginPath();
   _ctx.moveTo(x1, y1);
   _ctx.lineTo(x2, y2);
@@ -49,6 +55,7 @@ function line(x1, y1, x2, y2) {
 }
 
 function path(spec) {
+  debug('starting a new curve');
   _ctx.beginPath();
   var parsed = spec.split(/\s+/g);
   function arg() {
@@ -60,14 +67,19 @@ function path(spec) {
   try {
     for (var i = 0; i < parsed.length; ++i) {
       var cmd =  parsed[i];
+      var x = arg(), y = arg();
       if (cmd == "c") {
+        debug('drawing a line back to the start of the curve');
         _ctx.closePath();
       } else if (cmd == "g") {
-        _ctx.moveTo(arg(), arg());
+        debug('moving to', x, y);
+        _ctx.moveTo(x, y);
       } else if (cmd == "l") {
-        _ctx.lineTo(arg(), arg());
+        debug('drawing a straight line to', x, y);
+        _ctx.lineTo(x, y);
       } else if (cmd == "q") {
         var x = arg(), y = arg();
+        debug('drawing a curve to', x, y);
         _ctx.quadraticCurveTo(arg(), arg(), x, y);
       } else {
         throw new Error("Unrecognized path command: '" + cmd + "'");
@@ -80,6 +92,7 @@ function path(spec) {
 }
 
 function text(x, y, string) {
+  debug('writing text', JSON.stringify(string), 'at', x, y);
   _ctx.save();
   _ctx.scale(1, -1);
   _ctx.font = "16px sans-serif";
@@ -88,28 +101,39 @@ function text(x, y, string) {
 }
 
 function rotate(angle) {
+  debug('rotating coordinates by', angle, 'degrees');
   _ctx.save();
   ++_pushDepth;
   _ctx.rotate(angle * Math.PI / 180);
 }
 
 function moveTo(x, y) {
+  debug('moving origin of coordinates to', x, y);
   _ctx.save();
   ++_pushDepth;
   _ctx.translate(x, y);
 }
 
 function scale(factor) {
+  debug('scaling coordinates by a factor of', factor);
   _ctx.save();
   ++_pushDepth;
   _ctx.scale(factor, factor);
 }
 
 function goBack() {
+  debug('undoing the last change to the coordinates');
   _ctx.restore();
   --_pushDepth;
 }
 
 function fill(color) {
+  debug('Filling in with color', color);
   _ctx.fill();
+}
+
+function debug() {
+  if (DEBUG) {
+    console.log.apply(console, arguments);
+  }
 }
